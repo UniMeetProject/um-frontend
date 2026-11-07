@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Platform, Pressable, StyleSheet } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { DAY_START_MIN, BLOCK_MINUTES, intervalToBlocks, toHHMM } from '@/lib/time';
+import { DAY_START_MIN, DAY_END_MIN, BLOCK_MINUTES, intervalToBlocks, toHHMM } from '@/lib/time';
 import type { HHMM } from '@/lib/types';
 
 export type AvailabilityDraft = { start: HHMM; end: HHMM };
@@ -64,23 +64,41 @@ export function AvailabilityGrid({
 
   return (
     <ThemedView type="backgroundElement" style={styles.grid}>
-      {Array.from({ length: 48 }, (_, block) => {
-        const selected = selectedBlocks.has(block);
+      {Array.from({ length: (DAY_END_MIN - DAY_START_MIN) / 60 }, (_, hour) => {
+        const hourStart = toHHMM(hour * 60 + DAY_START_MIN);
         return (
-          <Pressable
-            key={block}
-            onPress={() => toggleBlock(block)}
-            onPressIn={() => setSelectionAnchor(block)}
-            onPointerEnter={Platform.OS === 'web' ? () => extendSelection(block) : undefined}
-            style={({ pressed }) => [
-              styles.cell,
-              {
-                backgroundColor: selected ? theme.coverage3 : theme.background,
-                borderColor: theme.backgroundSelected,
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}
-          />
+          <View key={hour} style={styles.hourRow}>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.hourLabel}>
+              {hourStart}
+            </ThemedText>
+            <View style={styles.hourCells}>
+              {Array.from({ length: 60 / BLOCK_MINUTES }, (_, quarter) => {
+                const block = hour * (60 / BLOCK_MINUTES) + quarter;
+                const start = toHHMM(block * BLOCK_MINUTES + DAY_START_MIN);
+                const end = toHHMM((block + 1) * BLOCK_MINUTES + DAY_START_MIN);
+                const selected = selectedBlocks.has(block);
+                return (
+                  <Pressable
+                    key={block}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${start}–${end}`}
+                    accessibilityState={{ selected }}
+                    onPress={() => toggleBlock(block)}
+                    onPressIn={() => setSelectionAnchor(block)}
+                    onPointerEnter={Platform.OS === 'web' ? () => extendSelection(block) : undefined}
+                    style={({ pressed }) => [
+                      styles.cell,
+                      {
+                        backgroundColor: selected ? theme.coverage3 : theme.background,
+                        borderColor: theme.backgroundSelected,
+                        opacity: pressed ? 0.75 : 1,
+                      },
+                    ]}
+                  />
+                );
+              })}
+            </View>
+          </View>
         );
       })}
       <ThemedText type="small" themeColor="textSecondary">
@@ -96,7 +114,21 @@ const styles = StyleSheet.create({
     padding: Spacing.two,
     gap: Spacing.one,
   },
+  hourRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  hourLabel: {
+    width: 40,
+  },
+  hourCells: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: Spacing.one,
+  },
   cell: {
+    flex: 1,
     minHeight: 22,
     borderWidth: 1,
     borderRadius: 6,
