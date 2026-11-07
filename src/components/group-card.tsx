@@ -23,7 +23,11 @@ export function GroupCard({
   const theme = useTheme();
 
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${group.name}: Details ansehen`}
+      onPress={onPress}
+      style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView type="backgroundElement" style={styles.card}>
         <ThemedText type="smallBold">{group.name}</ThemedText>
         <ThemedText themeColor="textSecondary" type="small">

@@ -17,7 +17,10 @@ export function StudentChip({
 }) {
   const theme = useTheme();
   return (
-    <Pressable onPress={() => onToggle(student)}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      onPress={() => onToggle(student)}>
       <ThemedView
         type={selected ? 'backgroundSelected' : 'backgroundElement'}
         style={[styles.chip, selected && { borderColor: theme.primary }]}>
