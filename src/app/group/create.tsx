@@ -1,4 +1,4 @@
-import { router, type Href } from 'expo-router';
+import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -76,8 +76,7 @@ export default function CreateGroupScreen() {
     );
 
     dispatch({ type: 'group/create', group, seededAvailability });
-    // The /group/[id] route ships in a later task; cast until typed routes know it.
-    router.replace(`/group/${groupId}` as Href);
+    router.replace(`/group/${groupId}`);
   }
 
   return (

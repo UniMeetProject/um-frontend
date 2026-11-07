@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams, type Href } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -64,11 +64,11 @@ export default function GroupDetailScreen() {
 
         <PrimaryButton
           label="Verfügbarkeit eintragen"
-          onPress={() => router.push(`/group/${group.id}/availability` as Href)}
+          onPress={() => router.push(`/group/${group.id}/availability`)}
         />
         <PrimaryButton
           label="Verfügbarkeiten vergleichen"
-          onPress={() => router.push(`/group/${group.id}/compare` as Href)}
+          onPress={() => router.push(`/group/${group.id}/compare`)}
         />
       </SafeAreaView>
     </ThemedView>

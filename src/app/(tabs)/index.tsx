@@ -1,4 +1,4 @@
-import { router, type Href } from 'expo-router';
+import { router } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -56,7 +56,7 @@ export default function GroupsScreen() {
                   context={item.context}
                   memberCount={item.group.memberIds.length}
                   meeting={item.meeting}
-                  onPress={() => router.push(`/group/${item.group.id}` as Href)}
+                  onPress={() => router.push(`/group/${item.group.id}`)}
                 />
               ) : null
             }

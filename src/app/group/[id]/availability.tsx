@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams, type Href } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,7 +50,7 @@ export default function AvailabilityScreen() {
       date,
       intervals: validDrafts,
     });
-    router.push(`/group/${group.id}/compare?date=${date}` as Href);
+    router.push(`/group/${group.id}/compare?date=${date}`);
   }
 
   return (
