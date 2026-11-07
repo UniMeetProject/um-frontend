@@ -25,6 +25,19 @@ export function countMembersPerBlock(
   return coverage;
 }
 
+/**
+ * Builds ranked common slots from per-block member coverage.
+ *
+ * Only *common* slots are returned: a slot always requires at least two
+ * distinct members, regardless of the supplied `minMembers`. `minMembers`
+ * raises that floor when it is greater than two — blocks covered by fewer
+ * than `minMembers` members never start or extend a slot. Passing
+ * `minMembers = 1` therefore does *not* yield single-member slots; it merely
+ * admits every block into run formation.
+ *
+ * Result is ranked by member count descending, then duration descending,
+ * then earlier start. Slots are half-open: `end` is exclusive.
+ */
 export function slotsFromCoverage(
   coverage: Map<number, Set<string>>,
   minMembers: number
