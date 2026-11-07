@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams, type Href } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -59,8 +59,7 @@ export default function CompareScreen() {
         status: 'proposed',
       },
     });
-    // The meeting details route lands in Task 11; cast until it exists.
-    router.push(`/meeting/${meetingId}` as Href);
+    router.push(`/meeting/${meetingId}`);
   }
 
   if (availability.length === 0) {
