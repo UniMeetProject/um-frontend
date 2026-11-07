@@ -67,12 +67,17 @@ export default function CompareScreen() {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <EmptyState
-            title="Keine Verfügbarkeit eingetragen"
-            message="Trage zuerst deine Zeiten ein, bevor du die Gruppe vergleichst."
-            actionLabel="Verfügbarkeit eintragen"
-            onAction={() => router.push(`/group/${group.id}/availability`)}
-          />
+          <View style={styles.emptyWrapper}>
+            <DateSelector dates={baseDates} value={date} onChange={setDate} />
+            <View style={styles.emptyContent}>
+              <EmptyState
+                title="Keine Verfügbarkeit eingetragen"
+                message="Trage zuerst deine Zeiten ein, bevor du die Gruppe vergleichst."
+                actionLabel="Verfügbarkeit eintragen"
+                onAction={() => router.push(`/group/${group.id}/availability`)}
+              />
+            </View>
+          </View>
         </SafeAreaView>
       </ThemedView>
     );
@@ -135,6 +140,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
   content: { padding: Spacing.four, gap: Spacing.four },
+  emptyWrapper: { flex: 1, padding: Spacing.four, gap: Spacing.four },
+  emptyContent: { flex: 1 },
   threshold: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   thresholdButtons: { flexDirection: 'row', gap: Spacing.two },
   coverage: { borderRadius: 18, padding: Spacing.two, gap: Spacing.one },
