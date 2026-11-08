@@ -32,6 +32,7 @@ export type Meeting = {
   end: HHMM;
   location: string;
   status: MeetingStatus;
+  attendeeIds?: string[];
 };
 
 export type AvailabilityInterval = {
@@ -67,4 +68,5 @@ export type DemoAction =
       date: ISODate;
       start: HHMM;
       end: HHMM;
+      attendeeIds?: string[];
     };

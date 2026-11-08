@@ -1,35 +1,22 @@
-import { ScrollView, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
 
-import { PrimaryButton } from '@/components/primary-button';
-import type { ISODate } from '@/lib/types';
+import { Copy, accent, dateLabel, forest, line } from '@/components/campus';
 
-export function DateSelector({
-  dates,
-  value,
-  onChange,
-}: {
-  dates: ISODate[];
-  value: ISODate;
-  onChange: (date: ISODate) => void;
+export function DateSelector({ dates, value, onChange }: {
+  dates: string[]; value: string; onChange: (date: string) => void;
 }) {
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dates}>
-      {dates.map((date) => (
-        <PrimaryButton
-          key={date}
-          label={new Intl.DateTimeFormat('de-DE', {
-            weekday: 'short',
-            day: '2-digit',
-            month: '2-digit',
-          }).format(new Date(`${date}T00:00:00`))}
-          disabled={date === value}
-          onPress={() => onChange(date)}
-        />
-      ))}
-    </ScrollView>
-  );
+  return <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip}>
+    {dates.map((date) => <Pressable key={date} accessibilityRole="button"
+      accessibilityLabel={dateLabel(date, { weekday: 'long', day: 'numeric', month: 'long' })}
+      accessibilityState={{ selected: value === date }} onPress={() => onChange(date)}
+      style={[styles.day, value === date && { borderColor: accent, backgroundColor: '#FBF2EB' }]}>
+      <Copy tone="small">{dateLabel(date, { weekday: 'short' })}</Copy>
+      <Copy tone="label" style={{ color: forest }}>{dateLabel(date, { day: '2-digit', month: '2-digit' })}</Copy>
+    </Pressable>)}
+  </ScrollView>;
 }
 
 const styles = StyleSheet.create({
-  dates: { gap: 8 },
+  strip: { gap: 6 },
+  day: { borderBottomWidth: 2, borderColor: line, minWidth: 58, padding: 8, alignItems: 'center', gap: 2 },
 });

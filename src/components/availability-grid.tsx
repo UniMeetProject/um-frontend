@@ -1,10 +1,7 @@
-import { useMemo, useState } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Copy, forest, line } from '@/components/campus';
 import { DAY_START_MIN, DAY_END_MIN, BLOCK_MINUTES, intervalToBlocks, toHHMM } from '@/lib/time';
 import type { HHMM } from '@/lib/types';
 
@@ -42,8 +39,6 @@ export function AvailabilityGrid({
   value: AvailabilityDraft[];
   onChange: (next: AvailabilityDraft[]) => void;
 }) {
-  const theme = useTheme();
-  const [selectionAnchor, setSelectionAnchor] = useState<number | null>(null);
   const selectedBlocks = useMemo(() => draftsToBlocks(value), [value]);
 
   function toggleBlock(block: number) {
@@ -53,27 +48,33 @@ export function AvailabilityGrid({
     onChange(blocksToDrafts(next));
   }
 
-  function extendSelection(block: number) {
-    if (selectionAnchor === null || Platform.OS !== 'web') return;
-    const start = Math.min(selectionAnchor, block);
-    const end = Math.max(selectionAnchor, block);
+  const quarters = 60 / BLOCK_MINUTES;
+
+  function toggleHour(firstBlock: number) {
+    const blocks = Array.from({ length: quarters }, (_, index) => firstBlock + index);
+    const clear = blocks.every((block) => selectedBlocks.has(block));
     const next = new Set(selectedBlocks);
-    for (let item = start; item <= end; item += 1) next.add(item);
+    for (const block of blocks) {
+      if (clear) next.delete(block);
+      else next.add(block);
+    }
     onChange(blocksToDrafts(next));
   }
 
   return (
-    <ThemedView type="backgroundElement" style={styles.grid}>
+    <View style={styles.grid}>
+      <Copy tone="small">Tippe auf die Uhrzeit links, um eine ganze Stunde zu markieren.</Copy>
       {Array.from({ length: (DAY_END_MIN - DAY_START_MIN) / 60 }, (_, hour) => {
         const hourStart = toHHMM(hour * 60 + DAY_START_MIN);
         return (
           <View key={hour} style={styles.hourRow}>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.hourLabel}>
-              {hourStart}
-            </ThemedText>
+            <Pressable accessibilityRole="button" accessibilityLabel={`Stunde ab ${hourStart} umschalten`}
+              onPress={() => toggleHour(hour * quarters)} style={styles.hourLabel}>
+              <Copy tone="small" style={{ color: forest, fontWeight: '700' }}>{hourStart}</Copy>
+            </Pressable>
             <View style={styles.hourCells}>
-              {Array.from({ length: 60 / BLOCK_MINUTES }, (_, quarter) => {
-                const block = hour * (60 / BLOCK_MINUTES) + quarter;
+              {Array.from({ length: quarters }, (_, quarter) => {
+                const block = hour * quarters + quarter;
                 const start = toHHMM(block * BLOCK_MINUTES + DAY_START_MIN);
                 const end = toHHMM((block + 1) * BLOCK_MINUTES + DAY_START_MIN);
                 const selected = selectedBlocks.has(block);
@@ -84,52 +85,50 @@ export function AvailabilityGrid({
                     accessibilityLabel={`${start}–${end}`}
                     accessibilityState={{ selected }}
                     onPress={() => toggleBlock(block)}
-                    onPressIn={() => setSelectionAnchor(block)}
-                    onPointerEnter={Platform.OS === 'web' ? () => extendSelection(block) : undefined}
                     style={({ pressed }) => [
                       styles.cell,
                       {
-                        backgroundColor: selected ? theme.coverage3 : theme.background,
-                        borderColor: theme.backgroundSelected,
+                        backgroundColor: selected ? forest : '#F8F6F0',
+                        borderColor: selected ? forest : line,
                         opacity: pressed ? 0.75 : 1,
                       },
-                    ]}
-                  />
+                    ]}>
+                    <Copy tone="small" style={{ color: selected ? '#FFFFFF' : forest }}>:{start.slice(3)}</Copy>
+                  </Pressable>
                 );
               })}
             </View>
           </View>
         );
       })}
-      <ThemedText type="small" themeColor="textSecondary">
-        08:00 – 20:00 · Tippen zum Markieren, auf dem Webclient ziehen für einen Bereich
-      </ThemedText>
-    </ThemedView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   grid: {
-    borderRadius: 18,
-    padding: Spacing.two,
-    gap: Spacing.one,
+    gap: 5,
   },
   hourRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
+    gap: 6,
   },
   hourLabel: {
-    width: 40,
+    width: 49,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   hourCells: {
     flex: 1,
     flexDirection: 'row',
-    gap: Spacing.one,
+    gap: 4,
   },
   cell: {
     flex: 1,
-    minHeight: 22,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 1,
     borderRadius: 6,
   },

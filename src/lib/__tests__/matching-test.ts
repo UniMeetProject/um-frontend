@@ -1,4 +1,4 @@
-import { countMembersPerBlock, findCommonSlots, slotsFromCoverage } from '@/lib/matching';
+import { continuousSlots, countMembersPerBlock, findCommonSlots, slotsFromCoverage } from '@/lib/matching';
 import type { AvailabilityInterval } from '@/lib/types';
 
 const base = { date: '2026-11-09' };
@@ -10,6 +10,20 @@ const interval = (
 ): AvailabilityInterval => ({ id, userId, date: base.date, start, end });
 
 describe('availability matching', () => {
+  it('offers only slots whose attendees are free from start to finish', () => {
+    const coverage = countMembersPerBlock([
+      interval('a', 'u1', '08:00', '09:00'),
+      interval('b', 'u2', '08:00', '08:30'),
+      interval('c', 'u3', '08:15', '09:00'),
+    ]);
+
+    expect(continuousSlots(coverage, 2).map(({ start, end, memberIds }) => ({ start, end, memberIds }))).toEqual([
+      { start: '08:15', end: '08:30', memberIds: ['u1', 'u2', 'u3'] },
+      { start: '08:15', end: '09:00', memberIds: ['u1', 'u3'] },
+      { start: '08:00', end: '08:30', memberIds: ['u1', 'u2'] },
+    ]);
+  });
+
   it('counts unique members per 15-minute block', () => {
     const coverage = countMembersPerBlock([
       interval('a', 'u1', '08:00', '08:30'),

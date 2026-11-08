@@ -127,6 +127,38 @@ export function findCommonSlots(
   return slotsFromCoverage(countMembersPerBlock(relevant), minMembers);
 }
 
+// The planner needs the same attendees to remain free throughout a selectable slot.
+export function continuousSlots(coverage: Map<number, Set<string>>, minimum: number): RankedSlot[] {
+  const floor = Math.max(2, minimum);
+  const candidates: { first: number; last: number; memberIds: string[] }[] = [];
+  for (const [first, members] of coverage) {
+    let available = members;
+    let last = first;
+    while (available.size >= floor) {
+      const next = intersectSets(available, coverage.get(last + 1) ?? new Set<string>());
+      if (next.size < available.size) {
+        candidates.push({ first, last, memberIds: [...available].sort() });
+      }
+      available = next;
+      last++;
+    }
+  }
+
+  return candidates
+    .filter((slot) => !candidates.some((other) =>
+      other !== slot && other.first <= slot.first && other.last >= slot.last &&
+      other.memberIds.length >= slot.memberIds.length))
+    .map(({ first, last, memberIds }) => ({
+      start: toHHMM(first * BLOCK_MINUTES + DAY_START_MIN),
+      end: toHHMM((last + 1) * BLOCK_MINUTES + DAY_START_MIN),
+      durationMin: (last - first + 1) * BLOCK_MINUTES,
+      memberCount: memberIds.length,
+      minMemberCount: memberIds.length,
+      memberIds,
+    }))
+    .sort((a, b) => b.memberCount - a.memberCount || b.durationMin - a.durationMin || a.start.localeCompare(b.start));
+}
+
 function intersectSets(a: Set<string>, b: Set<string>): Set<string> {
   const result = new Set<string>();
   for (const value of a) {

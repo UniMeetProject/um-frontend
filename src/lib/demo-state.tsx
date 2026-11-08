@@ -74,6 +74,7 @@ export function demoReducer(state: DemoData, action: DemoAction): DemoData {
                 start: action.start,
                 end: action.end,
                 status: 'changed' as const,
+                attendeeIds: action.attendeeIds ?? meeting.attendeeIds,
               }
             : meeting
         ),

@@ -1,87 +1,46 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
+import { View } from 'react-native';
 
-import { AvailabilityGrid, draftsToBlocks, type AvailabilityDraft } from '@/components/availability-grid';
-import { PrimaryButton } from '@/components/primary-button';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { AvailabilityGrid, type AvailabilityDraft } from '@/components/availability-grid';
+import { Button, Copy, Intro, Page } from '@/components/campus';
+import { DateSelector } from '@/components/date-selector';
+import { planningDates } from '@/lib/demo-dates';
 import { useDemoData } from '@/lib/demo-state';
-import { upcomingDates, todayLocal } from '@/lib/demo-dates';
 
 export default function AvailabilityScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, date: requestedDate, meetingId } = useLocalSearchParams<{ id: string; date?: string; meetingId?: string }>();
   const { state, dispatch } = useDemoData();
   const group = state.groups.find((item) => item.id === id);
-  const baseDates = useMemo(() => upcomingDates(todayLocal(), 3), []);
-  const [date, setDate] = useState(baseDates[0]);
+  const [dates] = useState(() => planningDates(requestedDate));
+  const [date, setDate] = useState(requestedDate && dates.includes(requestedDate) ? requestedDate : dates[0]);
+  const [changes, setChanges] = useState<Record<string, AvailabilityDraft[]>>({});
 
-  const initialDrafts = useMemo<AvailabilityDraft[]>(() => {
-    if (!group) return [];
-    return state.availability
-      .filter(
-        (item) => item.userId === state.currentUserId && item.date === date && group.memberIds.includes(item.userId)
-      )
-      .map(({ start, end }) => ({ start, end }));
-  }, [date, group, state.availability, state.currentUserId]);
+  if (!group) return <Page back="/"><Intro kicker="GRUPPEN" title="Gruppe nicht gefunden" /></Page>;
 
-  const [drafts, setDrafts] = useState<AvailabilityDraft[]>(initialDrafts);
-
-  if (!group) return null;
-
-  function changeDate(nextDate: string) {
-    setDate(nextDate);
-    const nextDrafts = state.availability
-      .filter(
-        (item) => item.userId === state.currentUserId && item.date === nextDate && group?.memberIds.includes(item.userId)
-      )
-      .map(({ start, end }) => ({ start, end }));
-    setDrafts(nextDrafts);
-  }
+  const drafts = changes[date] ?? state.availability.filter((item) =>
+    item.userId === state.currentUserId && item.date === date).map(({ start, end }) => ({ start, end }));
+  const compare = `/group/${id}/compare?date=${date}${meetingId ? `&meetingId=${meetingId}` : ''}` as const;
 
   function save() {
-    if (!group) return;
-    const validDrafts = drafts.filter((item) => draftsToBlocks([item]).size > 0);
-    dispatch({
-      type: 'availability/set',
-      userId: state.currentUserId,
-      date,
-      intervals: validDrafts,
-    });
-    router.push(`/group/${group.id}/compare?date=${date}`);
+    for (const [editedDate, intervals] of Object.entries(changes)) {
+      dispatch({ type: 'availability/set', userId: state.currentUserId, date: editedDate, intervals });
+    }
+    router.replace(compare);
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <ThemedText type="subtitle">Verfügbarkeit eintragen</ThemedText>
-          <ThemedText themeColor="textSecondary">{group.name}</ThemedText>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dates}>
-            {baseDates.map((item) => (
-              <PrimaryButton
-                key={item}
-                label={item}
-                disabled={item === date}
-                onPress={() => changeDate(item)}
-              />
-            ))}
-          </ScrollView>
-
-          <AvailabilityGrid value={drafts} onChange={setDrafts} />
-          <PrimaryButton label="Speichern" onPress={save} />
-        </ScrollView>
-      </SafeAreaView>
-    </ThemedView>
+    <Page back={`/group/${id}`} footer={<Button label="Speichern und vergleichen" icon="arrow" onPress={save} />}>
+      <Intro kicker={group.name.toLocaleUpperCase('de-DE')} title="Meine freien Zeiten"
+        description="Wähle einen Tag und markiere die Viertelstunden, an denen du Zeit hast. Deine Eingaben bleiben beim Tageswechsel erhalten." />
+      <DateSelector dates={dates} value={date} onChange={setDate} />
+      <View style={{ gap: 9 }}>
+        <Copy tone="eyebrow">AUSGEWÄHLTE ZEITEN</Copy>
+        <Copy>{drafts.length ? drafts.map(({ start, end }) => `${start}–${end}`).join(' · ') : 'Noch keine Zeiten markiert'}</Copy>
+        {!!drafts.length && <Button label="Auswahl für diesen Tag löschen" variant="quiet" style={{ alignSelf: 'flex-start' }}
+          onPress={() => setChanges((previous) => ({ ...previous, [date]: [] }))} />}
+      </View>
+      <AvailabilityGrid value={drafts} onChange={(value) => setChanges((previous) => ({ ...previous, [date]: value }))} />
+    </Page>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safeArea: { flex: 1 },
-  content: { padding: Spacing.four, gap: Spacing.four },
-  dates: { gap: Spacing.two },
-});

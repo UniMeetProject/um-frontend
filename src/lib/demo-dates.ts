@@ -20,3 +20,11 @@ export function addDays(date: ISODate, days: number): ISODate {
 export function upcomingDates(base: ISODate, count: number): ISODate[] {
   return Array.from({ length: count }, (_, index) => addDays(base, index));
 }
+
+export function planningDates(requested?: ISODate): ISODate[] {
+  const dates = upcomingDates(todayLocal(), 7);
+  if (!requested || !/^\d{4}-\d{2}-\d{2}$/.test(requested)) return dates;
+  const parsed = new Date(`${requested}T12:00:00`);
+  if (!Number.isFinite(parsed.getTime()) || formatLocalDate(parsed) !== requested) return dates;
+  return [...new Set([...dates, requested])].sort();
+}

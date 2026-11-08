@@ -1,98 +1,54 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
+import { View } from 'react-native';
 
-import { PrimaryButton } from '@/components/primary-button';
-import { StatusChip } from '@/components/status-chip';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Avatar, Button, Copy, Icon, Intro, Page, Panel, Row, dateLabel } from '@/components/campus';
+import { MeetingBadge } from '@/components/meeting-badge';
 import { useDemoData } from '@/lib/demo-state';
 
 export default function MeetingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { state, dispatch } = useDemoData();
+  const [cancelling, setCancelling] = useState(false);
   const meeting = state.meetings.find((item) => item.id === id);
-
-  if (!meeting) {
-    return (
-      <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.content}>
-          <ThemedText type="subtitle">Termin nicht gefunden</ThemedText>
-          <PrimaryButton label="Zurück zu Gruppen" onPress={() => router.replace('/')} />
-        </SafeAreaView>
-      </ThemedView>
-    );
-  }
+  if (!meeting) return <Page back="/kalender"><Intro kicker="KALENDER" title="Termin nicht gefunden" /></Page>;
 
   const group = state.groups.find((item) => item.id === meeting.groupId);
-  const attendees = state.students.filter((student) => group?.memberIds.includes(student.id));
+  const attendeeIds = meeting.attendeeIds ?? group?.memberIds ?? [];
+  const attendees = state.students.filter((student) => attendeeIds.includes(student.id));
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.content}>
-        <View style={styles.titleRow}>
-          <ThemedText type="subtitle">Lerntreffen</ThemedText>
-          <StatusChip status={meeting.status} />
-        </View>
-
-        <ThemedText themeColor="textSecondary">{group?.name ?? 'Lerngruppe'}</ThemedText>
-
-        <View style={styles.section}>
-          <ThemedText type="smallBold">Zeit</ThemedText>
-          <ThemedText>
-            {new Intl.DateTimeFormat('de-DE', {
-              weekday: 'long',
-              day: '2-digit',
-              month: 'long',
-              year: 'numeric',
-            }).format(new Date(`${meeting.date}T00:00:00`))}
-          </ThemedText>
-          <ThemedText>{meeting.start}–{meeting.end} Uhr</ThemedText>
-        </View>
-
-        <View style={styles.section}>
-          <ThemedText type="smallBold">Ort</ThemedText>
-          <ThemedText>{meeting.location}</ThemedText>
-        </View>
-
-        <View style={styles.section}>
-          <ThemedText type="smallBold">Teilnehmer</ThemedText>
-          {attendees.map((attendee) => (
-            <ThemedText key={attendee.id}>{attendee.name}</ThemedText>
-          ))}
-        </View>
-
-        <PrimaryButton
-          label="Annehmen"
-          disabled={meeting.status === 'confirmed'}
-          onPress={() => dispatch({ type: 'meeting/setStatus', meetingId: meeting.id, status: 'confirmed' })}
-        />
-        <PrimaryButton
-          label="Verschieben"
-          onPress={() =>
-            router.push(
-              `/group/${meeting.groupId}/compare?date=${meeting.date}&meetingId=${meeting.id}`
-            )
-          }
-        />
-        <PrimaryButton
-          label="Absagen"
-          disabled={meeting.status === 'cancelled'}
-          onPress={() => dispatch({ type: 'meeting/setStatus', meetingId: meeting.id, status: 'cancelled' })}
-        />
-      </SafeAreaView>
-    </ThemedView>
+    <Page back={group ? `/group/${group.id}` : '/kalender'}>
+      <Intro kicker="LERNTREFFEN" title={group?.name ?? 'Termin'} />
+      <Panel>
+        <MeetingBadge status={meeting.status} />
+        <Row><Icon name="calendar" /><View style={{ flex: 1 }}>
+          <Copy tone="label">{dateLabel(meeting.date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</Copy>
+          <Copy>{meeting.start}–{meeting.end} Uhr</Copy>
+        </View></Row>
+        <Row><Icon name="pin" /><Copy tone="label" style={{ flex: 1 }}>{meeting.location}</Copy></Row>
+      </Panel>
+      <View style={{ gap: 8 }}>
+        <Copy tone="heading">Teilnehmende</Copy>
+        {attendees.map((student) => <Row key={student.id}>
+          <Avatar student={student} /><Copy tone="label">{student.name}</Copy>
+        </Row>)}
+      </View>
+      {meeting.status !== 'cancelled' && <View style={{ gap: 8 }}>
+        {meeting.status !== 'confirmed' && <Button label="Termin bestätigen" icon="check"
+          onPress={() => dispatch({ type: 'meeting/setStatus', meetingId: id, status: 'confirmed' })} />}
+        {group && <Button label="Verschieben" variant="quiet"
+          onPress={() => router.push(`/group/${group.id}/compare?date=${meeting.date}&meetingId=${id}`)} />}
+        {cancelling ? <Panel>
+          <Copy tone="label">Diesen Termin absagen?</Copy>
+          <Copy>Der Termin verschwindet aus der Kalenderübersicht.</Copy>
+          <Button label="Absage bestätigen" variant="danger" onPress={() => {
+            dispatch({ type: 'meeting/setStatus', meetingId: id, status: 'cancelled' });
+            setCancelling(false);
+          }} />
+          <Button label="Termin behalten" variant="quiet" onPress={() => setCancelling(false)} />
+        </Panel> : <Button label="Termin absagen" variant="danger" onPress={() => setCancelling(true)} />}
+      </View>}
+    </Page>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { flex: 1, padding: Spacing.four, gap: Spacing.four },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  section: { gap: Spacing.two },
-});
