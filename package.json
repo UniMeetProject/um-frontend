@@ -38,16 +38,19 @@
   },
   "scripts": {
     "start": "expo start",
+    "dev": "npm run dev --prefix web",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web",
+    "web": "npm run dev --prefix web",
+    "web:expo": "expo start --web",
     "lint": "expo lint",
     "test": "jest",
     "typecheck": "tsc --noEmit"
   },
   "jest": {
     "preset": "jest-expo",
+    "roots": ["<rootDir>/src"],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"
     }

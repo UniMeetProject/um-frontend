@@ -1,8 +1,15 @@
-# Welcome to your Expo app 👋
+# UniMeet frontend
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The Lovable design is the web entry point. Run these commands from the repository root:
 
-## Get started
+```sh
+npx --yes bun install --cwd web --frozen-lockfile
+npm run dev
+```
+
+Run `npm run build --prefix web` for a production build or `npm test --prefix web` for the web tests. The web app uses sample data and resets on reload.
+
+## Expo development
 
 1. Install dependencies
 
