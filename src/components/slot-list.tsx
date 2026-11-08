@@ -29,11 +29,13 @@ export function SlotList({
                 {slot.start}–{slot.end}
               </ThemedText>
               <ThemedText type="small" style={{ color: theme.primary }}>
-                {slot.memberCount}/{groupSize} Personen
+                Bis zu {slot.memberCount}/{groupSize} Personen
               </ThemedText>
             </View>
             <ThemedText themeColor="textSecondary" type="small">
-              {slot.durationMin} Minuten verfügbar
+              Mindestens {slot.minMemberCount}{' '}
+              {slot.minMemberCount === 1 ? 'Person' : 'Personen'} zu jeder Zeit ·{' '}
+              {slot.durationMin} Minuten
             </ThemedText>
           </ThemedView>
         </Pressable>

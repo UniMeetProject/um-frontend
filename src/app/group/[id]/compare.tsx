@@ -16,13 +16,18 @@ import { findCommonSlots, countMembersPerBlock, type RankedSlot } from '@/lib/ma
 import { useTheme } from '@/hooks/use-theme';
 
 export default function CompareScreen() {
-  const { id, date: initialDate } = useLocalSearchParams<{ id: string; date?: string }>();
+  const { id, date: initialDate, meetingId } = useLocalSearchParams<{
+    id: string;
+    date?: string;
+    meetingId?: string;
+  }>();
   const { state, dispatch } = useDemoData();
   const theme = useTheme();
   const group = state.groups.find((item) => item.id === id);
   const baseDates = useMemo(() => upcomingDates(todayLocal(), 3), []);
   const [date, setDate] = useState(initialDate ?? baseDates[0]);
-  const [minMembers, setMinMembers] = useState(1);
+  // Matching never yields one-member common slots, so two is the real floor.
+  const [minMembers, setMinMembers] = useState(2);
 
   const availability = useMemo(
     () => (group ? availabilityForGroup(state.availability, group, date) : []),
@@ -46,11 +51,22 @@ export default function CompareScreen() {
 
   function selectSlot(slot: RankedSlot) {
     if (!group) return;
-    const meetingId = `m-${Date.now()}`;
+    if (meetingId) {
+      dispatch({
+        type: 'meeting/reschedule',
+        meetingId,
+        date,
+        start: slot.start,
+        end: slot.end,
+      });
+      router.push(`/meeting/${meetingId}`);
+      return;
+    }
+    const meetingIdNew = `m-${Date.now()}`;
     dispatch({
       type: 'meeting/create',
       meeting: {
-        id: meetingId,
+        id: meetingIdNew,
         groupId: group.id,
         date,
         start: slot.start,
@@ -59,7 +75,7 @@ export default function CompareScreen() {
         status: 'proposed',
       },
     });
-    router.push(`/meeting/${meetingId}`);
+    router.push(`/meeting/${meetingIdNew}`);
   }
 
   if (availability.length === 0) {
@@ -92,10 +108,17 @@ export default function CompareScreen() {
           <View style={styles.threshold}>
             <ThemedText type="smallBold">Mindestens {minMembers} Personen</ThemedText>
             <View style={styles.thresholdButtons}>
-              <PrimaryButton label="−" onPress={() => setMinMembers((value) => Math.max(1, value - 1))} />
+              <PrimaryButton
+                label="−"
+                disabled={minMembers <= 2}
+                onPress={() => setMinMembers((value) => Math.max(2, value - 1))}
+              />
               <PrimaryButton
                 label="+"
-                onPress={() => setMinMembers((value) => Math.min(group.memberIds.length, value + 1))}
+                disabled={minMembers >= group.memberIds.length}
+                onPress={() =>
+                  setMinMembers((value) => Math.min(group.memberIds.length, value + 1))
+                }
               />
             </View>
           </View>
@@ -121,7 +144,7 @@ export default function CompareScreen() {
 
           {slots.length === 0 ? (
             <ThemedText themeColor="textSecondary">
-              Für dieses Datum gibt es keinen gemeinsamen Zeitraum. Erweitere das Datum oder senke den Personenschwellenwert.
+              Für dieses Datum gibt es keinen gemeinsamen Zeitraum. Wähle ein anderes Datum oder bitte mehr Mitglieder, ihre Verfügbarkeit einzutragen.
             </ThemedText>
           ) : (
             <>

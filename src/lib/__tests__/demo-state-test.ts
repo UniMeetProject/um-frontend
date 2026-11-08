@@ -78,6 +78,47 @@ describe('demo state', () => {
     expect(created.meetings.find((item) => item.id === 'm-new')?.status).toBe('proposed');
   });
 
+  it('reschedules a meeting immutably and marks it as changed', () => {
+    const initial = createFixtures('2026-11-09');
+    const next = demoReducer(initial, {
+      type: 'meeting/reschedule',
+      meetingId: 'm-projekt-proposed',
+      date: '2026-11-10',
+      start: '14:00',
+      end: '15:30',
+    });
+
+    const rescheduled = next.meetings.find((item) => item.id === 'm-projekt-proposed');
+    expect(rescheduled).toEqual(
+      expect.objectContaining({
+        date: '2026-11-10',
+        start: '14:00',
+        end: '15:30',
+        status: 'changed',
+        groupId: 'g-projekt',
+        location: 'Campus Bibliothek',
+      })
+    );
+    expect(next.meetings).toHaveLength(initial.meetings.length);
+    // Original meeting object is untouched.
+    expect(initial.meetings.find((item) => item.id === 'm-projekt-proposed')).toEqual(
+      expect.objectContaining({ date: '2026-11-10', start: '10:00', end: '11:30', status: 'proposed' })
+    );
+  });
+
+  it('returns state unchanged when rescheduling an unknown meeting', () => {
+    const initial = createFixtures('2026-11-09');
+    const next = demoReducer(initial, {
+      type: 'meeting/reschedule',
+      meetingId: 'm-missing',
+      date: '2026-11-10',
+      start: '14:00',
+      end: '15:30',
+    });
+
+    expect(next).toBe(initial);
+  });
+
   it('provides group-scoped selectors', () => {
     const fixtures = createFixtures('2026-11-09');
     const group = fixtures.groups.find((item) => item.id === 'g-analysis');

@@ -59,6 +59,26 @@ export function demoReducer(state: DemoData, action: DemoAction): DemoData {
             : meeting
         ),
       };
+
+    case 'meeting/reschedule': {
+      if (!state.meetings.some((meeting) => meeting.id === action.meetingId)) {
+        return state;
+      }
+      return {
+        ...state,
+        meetings: state.meetings.map((meeting) =>
+          meeting.id === action.meetingId
+            ? {
+                ...meeting,
+                date: action.date,
+                start: action.start,
+                end: action.end,
+                status: 'changed' as const,
+              }
+            : meeting
+        ),
+      };
+    }
   }
 }
 

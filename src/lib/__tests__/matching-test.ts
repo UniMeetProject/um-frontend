@@ -34,9 +34,87 @@ describe('availability matching', () => {
         end: '09:00',
         durationMin: 60,
         memberCount: 2,
+        minMemberCount: 2,
         memberIds: ['u1', 'u2'],
       },
     ]);
+  });
+
+  it('does not combine adjacent intervals that share no member', () => {
+    const slots = findCommonSlots(
+      [
+        interval('a', 'u1', '08:00', '09:00'),
+        interval('b', 'u2', '09:00', '10:00'),
+      ],
+      ['u1', 'u2'],
+      base.date,
+      1
+    );
+
+    expect(slots).toEqual([]);
+  });
+
+  it('reports the per-block minimum separately from the union size', () => {
+    const slots = findCommonSlots(
+      [
+        interval('a', 'u1', '08:00', '09:30'),
+        interval('b', 'u2', '08:30', '09:00'),
+      ],
+      ['u1', 'u2'],
+      base.date,
+      1
+    );
+
+    expect(slots).toEqual([
+      {
+        start: '08:00',
+        end: '09:30',
+        durationMin: 90,
+        memberCount: 2,
+        minMemberCount: 1,
+        memberIds: ['u1', 'u2'],
+      },
+    ]);
+  });
+
+  it('keeps valid remainder slots when a member leaves mid-run', () => {
+    const slots = findCommonSlots(
+      [
+        interval('a', 'u1', '08:00', '09:00'),
+        interval('b', 'u2', '08:00', '08:30'),
+        interval('c', 'u3', '08:00', '09:00'),
+      ],
+      ['u1', 'u2', 'u3'],
+      base.date,
+      2
+    );
+
+    expect(slots).toEqual([
+      expect.objectContaining({
+        start: '08:00',
+        end: '09:00',
+        memberCount: 3,
+        minMemberCount: 2,
+      }),
+      expect.objectContaining({
+        start: '08:30',
+        end: '09:00',
+        memberCount: 2,
+        minMemberCount: 2,
+      }),
+    ]);
+  });
+
+  it('never lowers the two-member floor below max(2, minMembers)', () => {
+    const intervals = [
+      interval('a', 'u1', '08:00', '09:00'),
+      interval('b', 'u2', '08:00', '09:00'),
+    ];
+
+    expect(findCommonSlots(intervals, ['u1', 'u2'], base.date, 1)).toEqual([
+      expect.objectContaining({ start: '08:00', end: '09:00', memberCount: 2 }),
+    ]);
+    expect(findCommonSlots(intervals, ['u1', 'u2'], base.date, 3)).toEqual([]);
   });
 
   it('ranks full coverage before partial coverage', () => {
@@ -51,8 +129,18 @@ describe('availability matching', () => {
       1
     );
 
-    expect(slots[0]).toMatchObject({ start: '08:00', end: '09:00', memberCount: 3 });
-    expect(slots[1]).toMatchObject({ start: '08:30', end: '09:00', memberCount: 2 });
+    expect(slots[0]).toMatchObject({
+      start: '08:00',
+      end: '09:00',
+      memberCount: 3,
+      minMemberCount: 2,
+    });
+    expect(slots[1]).toMatchObject({
+      start: '08:30',
+      end: '09:00',
+      memberCount: 2,
+      minMemberCount: 2,
+    });
   });
 
   it('applies the member threshold', () => {

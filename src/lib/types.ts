@@ -60,4 +60,11 @@ export type DemoAction =
       intervals: Pick<AvailabilityInterval, 'start' | 'end'>[];
     }
   | { type: 'meeting/create'; meeting: Meeting }
-  | { type: 'meeting/setStatus'; meetingId: string; status: MeetingStatus };
+  | { type: 'meeting/setStatus'; meetingId: string; status: MeetingStatus }
+  | {
+      type: 'meeting/reschedule';
+      meetingId: string;
+      date: ISODate;
+      start: HHMM;
+      end: HHMM;
+    };

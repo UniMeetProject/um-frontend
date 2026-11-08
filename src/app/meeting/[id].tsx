@@ -70,7 +70,11 @@ export default function MeetingScreen() {
         />
         <PrimaryButton
           label="Verschieben"
-          onPress={() => router.push(`/group/${meeting.groupId}/compare?date=${meeting.date}`)}
+          onPress={() =>
+            router.push(
+              `/group/${meeting.groupId}/compare?date=${meeting.date}&meetingId=${meeting.id}`
+            )
+          }
         />
         <PrimaryButton
           label="Absagen"
