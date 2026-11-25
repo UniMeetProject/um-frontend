@@ -11,12 +11,10 @@ Run `npm run build --prefix web` for a production build or `npm test --prefix we
 
 ## Daily startup with authentication
 
-Start Docker Desktop, then open a PowerShell terminal for the backend:
+With the supplied shared backend `.env`, open a PowerShell terminal for the backend:
 
 ```powershell
 cd D:\Kimi\UniMeetProjekt\um-backend
-docker compose up -d --wait db
-npx prisma migrate deploy
 npm run start:dev
 ```
 
@@ -27,7 +25,7 @@ cd D:\Kimi\UniMeetProjekt\um-frontend\web
 npm run dev -- --port 5173
 ```
 
-Open <http://localhost:5173> after the backend reports `Nest application successfully started`. The API uses port 3000 and PostgreSQL uses port 5432.
+Open <http://localhost:5173> after the backend reports `Nest application successfully started`. The API uses port 3000. The supplied configuration connects to the shared external PostgreSQL database.
 
 For first-time database configuration, checks and shutdown commands, see the [backend README](../um-backend/README.md#local-unimeet-database). For frontend API configuration, see the [web README](web/README.md#authentication).
 
