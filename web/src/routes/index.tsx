@@ -6,6 +6,7 @@ import { Avatar, Empty, Shell, StatusDot, btnClass } from "@/components/ui-kit";
 import { person, slotTime, statusKey, statusLabel } from "@/lib/data";
 import { fmtDay } from "@/lib/format";
 import { useStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -24,6 +25,7 @@ const FILTERS = [
 ];
 
 function Index() {
+  const { user } = useAuth();
   const { groups } = useStore();
   const [filter, setFilter] = useState("alle");
   const next = groups.filter((g) => g.meeting?.status === "bestaetigt")
@@ -34,8 +36,8 @@ function Index() {
     <Shell>
       <section className="grid gap-10 md:grid-cols-2 md:items-center md:gap-16">
         <div>
-          <p className="label-caps">Wintersemester 2026/27 · KW 46</p>
-          <h1 className="mt-3 text-4xl leading-tight md:text-6xl">Guten Morgen, Lena.</h1>
+          <p className="label-caps">Dein Campusplaner</p>
+          <h1 className="mt-3 break-words text-4xl leading-tight md:text-6xl">Willkommen, {user?.username ?? user?.email.split('@')[0]}.</h1>
           <p className="mt-4 max-w-md text-muted-foreground">Finde mit deinen Lerngruppen Zeiten, die für alle passen – ohne endlose Nachrichten.</p>
 
           <div className="mt-8 border-t border-border pt-6">

@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { StoreProvider } from "../lib/store";
+import { AuthProvider, useAuth } from "../lib/auth";
+import { AuthGate } from "../components/auth-gate";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -126,9 +128,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <StoreProvider>
-        <Outlet />
-      </StoreProvider>
+      <AuthProvider><AuthGate><AccountContent /></AuthGate></AuthProvider>
     </QueryClientProvider>
   );
+}
+
+function AccountContent() {
+  const { user } = useAuth();
+  return <StoreProvider key={user?.id}><Outlet /></StoreProvider>;
 }

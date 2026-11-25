@@ -36,7 +36,10 @@ export function Shell({ children }: { children: ReactNode }) {
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-5 py-8 md:px-10 md:py-12">{children}</main>
+      <main className="mx-auto max-w-6xl px-5 py-8 md:px-10 md:py-12">
+        <p className="mb-6 text-sm text-muted-foreground">Lerngruppen, Personen und Termine sind Beispieldaten für diese Sitzung.</p>
+        {children}
+      </main>
       <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background md:hidden">
         <div className="grid grid-cols-4">
           {nav.map((n) => (
